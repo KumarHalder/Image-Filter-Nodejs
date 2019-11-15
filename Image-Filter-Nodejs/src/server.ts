@@ -1,10 +1,12 @@
 import express from 'express';
 import { Router,Request,Response } from "express"
-
+var fs = require('fs');
 import bodyParser from 'body-parser';
 import $ from "jquery";
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
-
+const path = require('path');
+var tempImageFolder = path.join(__dirname,"../src/util/tmp");
+console.log(tempImageFolder);
 (async () => {
 
   // Init the Express application
@@ -39,7 +41,18 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
     }
 
     let img =  filterImageFromURL(name);
-    
+    let imagePathArray: string[] = [];
+    fs.readdir(tempImageFolder, function(err:Error, items:string) {
+      //console.log(path.items);
+   
+      for (var i=0; i<items.length; i++) {
+          
+          imagePathArray.push(__dirname + "/util/tmp/" +  items[i])
+      }
+      console.log(imagePathArray);
+      let del = deleteLocalFiles(imagePathArray);
+
+  });
     return res.status(202).send(img);
   }
 
