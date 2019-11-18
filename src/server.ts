@@ -1,14 +1,26 @@
-import express from "express";
-import bodyParser from "body-parser";
-import { filterImageFromURL, deleteLocalFiles } from "./util/util";
+import express from 'express';
+import { Router,Request,Response } from "express"
+import bodyParser from 'body-parser';
+import $ from "jquery";
+var urlExists = require('url-exists');
 
+import {filterImageFromURL, deleteLocalFiles} from './util/util';
+
+
+var fs = require('fs');
+const path = require('path');
+
+
+var tempImageFolder = path.join(__dirname,"../src/util/tmp");
+console.log(tempImageFolder);
 (async () => {
+
   // Init the Express application
   const app = express();
 
   // Set the network port
   const port = process.env.PORT || 8082;
-
+  
   // Use the body parser middleware for post requests
   app.use(bodyParser.json());
 
@@ -25,39 +37,68 @@ import { filterImageFromURL, deleteLocalFiles } from "./util/util";
   //    image_url: URL of a publicly accessible image
   // RETURNS
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
+  app.get("/filteredimage/",(req:Request, res: Response) => 
+  {
+    //res.status(200).send("endpoint working");
+    let {name} = req.query;
+    if (!name){
+      return res.status(400).
+                            send("url is requried");
+    }
+    
+    urlExists(name, function(err:Error, exists:boolean) {
+    
+    if (exists){
+      let imgfilterPromise =  filterImageFromURL(name);
+    imgfilterPromise.then(function (imgPath){
+     
+      console.log(imgPath);
+      
+      res.status(200).sendFile(imgPath);
+      
+    
+    }
+    ).then(function(){
+      let imagePathArray: string[] = [];
+    
+      fs.readdir(tempImageFolder, function(err:Error, items:string) {
+        //console.log(path.items);
+     
+        for (var i=0; i<items.length; i++) {
+            
+            imagePathArray.push(__dirname + "/util/tmp/" +  items[i])
+        }
+        //console.log(imagePathArray);
+        let del = deleteLocalFiles(imagePathArray);
+  
+    });
+    });
+    }
+    else {
+      res.status(422).send("invalid url");
+    }
+    });
+    
+    
+   
+    
+  }
 
+  );
   /**************************************************************************** */
-  app.get("/filteredimage", async (req, res) => {
-    const imageUrl = req.query.image_url;
 
-    // check imageUrl is valid
-    if (!imageUrl) {
-      return res.status(400).send({
-        message: "The image url is required or malformed"
-      });
-    }
-
-    try {
-      console;
-      const filteredImageFromURL = await filterImageFromURL(imageUrl);
-      res.sendFile(filteredImageFromURL, () =>
-        deleteLocalFiles([filteredImageFromURL])
-      );
-    } catch (error) {
-      res.sendStatus(422).send("Unable to process image at the provided url");
-    }
-  });
   //! END @TODO1
-
+  
   // Root Endpoint
   // Displays a simple message to the user
-  app.get("/", async (req, res) => {
-    res.send("try GET /filteredimage?image_url={{}}");
-  });
+  app.get( "/", async ( req, res ) => {
+    res.send("try GET /filteredimage?image_url={{}}")
+  } );
+  
 
   // Start the Server
-  app.listen(port, () => {
-    console.log(`server running http://localhost:${port}`);
-    console.log(`press CTRL+C to stop server`);
-  });
+  app.listen( port, () => {
+      console.log( `server running http://localhost:${ port }` );
+      console.log( `press CTRL+C to stop server` );
+  } );
 })();
