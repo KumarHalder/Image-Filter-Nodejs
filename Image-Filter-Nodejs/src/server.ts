@@ -1,15 +1,10 @@
 import express from 'express';
 import { Router,Request,Response } from "express"
-import bodyParser from 'body-parser';
-var urlExists = require('url-exists');
-
-import {filterImageFromURL, deleteLocalFiles} from './util/util';
-
-
 var fs = require('fs');
+import bodyParser from 'body-parser';
+import $ from "jquery";
+import {filterImageFromURL, deleteLocalFiles} from './util/util';
 const path = require('path');
-
-
 var tempImageFolder = path.join(__dirname,"../src/util/tmp");
 console.log(tempImageFolder);
 (async () => {
@@ -44,43 +39,21 @@ console.log(tempImageFolder);
       return res.status(400).
                             send("url is requried");
     }
-    
-    urlExists(name, function(err:Error, exists:boolean) {
-    
-    if (exists){
-      let imgfilterPromise =  filterImageFromURL(name);
-    imgfilterPromise.then(function (imgPath){
-     
-      console.log(imgPath);
-      
-      res.status(200).sendFile(imgPath);
-      
-    
-    }
-    ).then(function(){
-      let imagePathArray: string[] = [];
-    
-      fs.readdir(tempImageFolder, function(err:Error, items:string) {
-        //console.log(path.items);
-     
-        for (var i=0; i<items.length; i++) {
-            
-            imagePathArray.push(__dirname + "/util/tmp/" +  items[i])
-        }
-        //console.log(imagePathArray);
-        let del = deleteLocalFiles(imagePathArray);
-  
-    });
-    });
-    }
-    else {
-      res.status(422).send("invalid url");
-    }
-    });
-    
-    
+
+    let img =  filterImageFromURL(name);
+    let imagePathArray: string[] = [];
+    fs.readdir(tempImageFolder, function(err:Error, items:string) {
+      //console.log(path.items);
    
-    
+      for (var i=0; i<items.length; i++) {
+          
+          imagePathArray.push(__dirname + "/util/tmp/" +  items[i])
+      }
+      console.log(imagePathArray);
+      let del = deleteLocalFiles(imagePathArray);
+
+  });
+    return res.status(202).sendFile(img);
   }
 
   );
