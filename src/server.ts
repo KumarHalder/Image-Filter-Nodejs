@@ -1,7 +1,6 @@
 import express from 'express';
-import { Router,Request,Response } from "express"
+import { Request,Response } from "express"
 import bodyParser from 'body-parser';
-import $ from "jquery";
 var urlExists = require('url-exists');
 
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
@@ -40,16 +39,17 @@ console.log(tempImageFolder);
   app.get("/filteredimage/",(req:Request, res: Response) => 
   {
     //res.status(200).send("endpoint working");
-    let {name} = req.query;
-    if (!name){
+    let name = req.query;
+    
+    if (!name.image_url){
       return res.status(400).
                             send("url is requried");
     }
     
-    urlExists(name, function(err:Error, exists:boolean) {
-    
+    urlExists(name.image_url, function(err:Error, exists:boolean) {
+   
     if (exists){
-      let imgfilterPromise =  filterImageFromURL(name);
+      let imgfilterPromise =  filterImageFromURL(name.image_url);
     imgfilterPromise.then(function (imgPath){
      
       console.log(imgPath);
