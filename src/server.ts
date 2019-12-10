@@ -1,17 +1,11 @@
 import express from 'express';
-import { Request,Response } from "express"
+import { Router,Request,Response } from "express"
 import bodyParser from 'body-parser';
-var urlExists = require('url-exists');
-
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
+//init url-validator checker
+var urlExists = require('url-exists');
 
-var fs = require('fs');
-const path = require('path');
-
-
-var tempImageFolder = path.join(__dirname,"../src/util/tmp");
-console.log(tempImageFolder);
 (async () => {
 
   // Init the Express application
@@ -37,53 +31,48 @@ console.log(tempImageFolder);
   // RETURNS
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
   app.get("/filteredimage/",(req:Request, res: Response) => 
-  {
-    //res.status(200).send("endpoint working");
-    let name = req.query;
-    
-    if (!name.image_url){
-      return res.status(400).
-                            send("url is requried");
-    }
-    
-    urlExists(name.image_url, function(err:Error, exists:boolean) {
-   
-    if (exists){
-      let imgfilterPromise =  filterImageFromURL(name.image_url);
-    imgfilterPromise.then(function (imgPath){
-     
-      console.log(imgPath);
+    {
+      //res.status(200).send("endpoint working");
+      let name = req.query;
+      //Check if the url is empty
+      if (!name.image_url){
+        return res.status(400).
+                              send("url is requried");
+      }
       
-      res.status(200).sendFile(imgPath);
+      //check if url is valid
+      urlExists(name.image_url, function(err:Error, exists:boolean) 
+        {
+          //variable for tracking procesed image path
+          var imagePath = '';
+          if (exists){
+            //filter image for a given public url
+            let imgfilterPromise =  filterImageFromURL(name.image_url);
+            imgfilterPromise.then(function (imgPath)
+              {
+              
+                return new Promise(resolve =>{
+                  //assign image path in global var
+                  imagePath = imgPath;
+                  //send file as response and delete local created file after file is sent
+                  res.status(200).sendFile(imgPath,()=>{
+                    let imagePathArray: string[] = [];
+                    //console.log(imagePath);
+                    imagePathArray.push(imagePath);
+                    
+                    let del = deleteLocalFiles(imagePathArray);});
+                });
+              
+              });
+          }
+          else 
+            {
+              res.status(422).send("invalid url");
+            }
+        });
       
-    
+      
     }
-    ).then(function(){
-      let imagePathArray: string[] = [];
-    
-      fs.readdir(tempImageFolder, function(err:Error, items:string) {
-        //console.log(path.items);
-     
-        for (var i=0; i<items.length; i++) {
-            
-            imagePathArray.push(__dirname + "/util/tmp/" +  items[i])
-        }
-        //console.log(imagePathArray);
-        let del = deleteLocalFiles(imagePathArray);
-  
-    });
-    });
-    }
-    else {
-      res.status(422).send("invalid url");
-    }
-    });
-    
-    
-   
-    
-  }
-
   );
   /**************************************************************************** */
 
