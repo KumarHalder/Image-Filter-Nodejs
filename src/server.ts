@@ -30,7 +30,7 @@ var urlExists = require('url-exists');
   //    image_url: URL of a publicly accessible image
   // RETURNS
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
-  app.get("/filteredimage/",(req:Request, res: Response) => 
+  app.get("/filteredimage",(req:Request, res: Response) => 
     {
       //res.status(200).send("endpoint working");
       let name = req.query;

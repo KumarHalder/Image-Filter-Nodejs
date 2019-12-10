@@ -13,12 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
-var urlExists = require('url-exists');
 const util_1 = require("./util/util");
-var fs = require('fs');
-const path = require('path');
-var tempImageFolder = path.join(__dirname, "../src/util/tmp");
-console.log(tempImageFolder);
+//init url-validator checker
+var urlExists = require('url-exists');
 (() => __awaiter(this, void 0, void 0, function* () {
     // Init the Express application
     const app = express_1.default();
@@ -39,26 +36,30 @@ console.log(tempImageFolder);
     //    image_url: URL of a publicly accessible image
     // RETURNS
     //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
-    app.get("/filteredimage/", (req, res) => {
+    app.get("/filteredimage", (req, res) => {
         //res.status(200).send("endpoint working");
         let name = req.query;
-        console.log(name.image_url);
+        //Check if the url is empty
         if (!name.image_url) {
             return res.status(400).
                 send("url is requried");
         }
+        //check if url is valid
         urlExists(name.image_url, function (err, exists) {
+            //variable for tracking procesed image path
             var imagePath = '';
             if (exists) {
+                //filter image for a given public url
                 let imgfilterPromise = util_1.filterImageFromURL(name.image_url);
                 imgfilterPromise.then(function (imgPath) {
                     return new Promise(resolve => {
+                        //assign image path in global var
                         imagePath = imgPath;
+                        //send file as response and delete local created file after file is sent
                         res.status(200).sendFile(imgPath, () => {
                             let imagePathArray = [];
                             //console.log(imagePath);
                             imagePathArray.push(imagePath);
-                            console.log(imagePathArray);
                             let del = util_1.deleteLocalFiles(imagePathArray);
                         });
                     });
