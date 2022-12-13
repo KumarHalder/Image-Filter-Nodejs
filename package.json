@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@types/jquery": "^3.3.31",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "jimp": "^0.6.4",
     "jquery": "^3.4.1",
     "url-exists": "^1.0.3"
